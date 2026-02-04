@@ -1,0 +1,61 @@
+{
+  "name": "electron-secure-defaults",
+  "version": "1.0.0",
+  "description": "A starter kit for security conscious Electron apps",
+  "scripts": {
+    "clean": "rm -rf build package",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "eslint -c .eslintrc --ext .ts ./src",
+    "start": "npm run build && electron ./dist/main.js",
+    "package": "yarn electron-builder --publish never",
+    "electronegativity": "electronegativity -i ./src"
+  },
+  "repository": "https://github.com/1password/electron-secure-defaults",
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo",
+    "typescript",
+    "secure"
+  ],
+  "author": "1Password",
+  "contributors": [
+    "GitHub",
+    "Mitchell Cohen (github.com/mitchchn)"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@doyensec/electronegativity": "^1.9.0",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0",
+    "electron": "^21.0.0",
+    "electron-builder": "^23.6.0",
+    "eslint": "^7.3.1",
+    "typescript": "^4.9.5"
+  },
+  "main": "main.js",
+  "build": {
+    "directories": {
+      "buildResources": "dist",
+      "output": "package"
+    },
+    "files": [
+      "!node_modules",
+      "package.json",
+      "index.html",
+      {
+        "from": "./dist",
+        "to": ".",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "extraResources": [
+      "index.html"
+    ]
+  }
+}
