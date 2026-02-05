@@ -24,13 +24,32 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          start=$SECONDS
+          yarn install --frozen-lockfile
+          echo "::notice::Install took $((SECONDS - start))s"
 
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        run: |
+          start=$SECONDS
+          set +e
+          echo "::group::npm audit output"
+          npm audit --audit-level=high 2>&1
+          audit_exit=$?
+          echo "::endgroup::"
+          echo "::notice::Audit took $((SECONDS - start))s"
+          if [ $audit_exit -ne 0 ]; then
+            echo "::error::npm audit found high or critical vulnerabilities"
+          fi
+          exit $audit_exit
 
       - name: Electronegativity scan
-        run: yarn electronegativity
+        run: |
+          start=$SECONDS
+          echo "::group::Electronegativity output"
+          yarn electronegativity
+          echo "::endgroup::"
+          echo "::notice::Electronegativity took $((SECONDS - start))s"
 
   build:
     name: Build (${{ matrix.os }})
@@ -50,11 +69,41 @@ jobs:
           node-version: 18
           cache: yarn
 
+      - name: Environment info
+        run: |
+          echo "::group::Environment"
+          echo "Node: $(node --version)"
+          echo "Yarn: $(yarn --version)"
+          echo "OS: $(uname -srm)"
+          echo "Disk: $(df -h . | tail -1 | awk '{print $4 " available"}')"
+          echo "::endgroup::"
+
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          start=$SECONDS
+          echo "::group::yarn install"
+          yarn install --frozen-lockfile
+          echo "::endgroup::"
+          duration=$((SECONDS - start))
+          echo "::notice::Install took ${duration}s"
+          echo "INSTALL_DURATION=${duration}" >> $GITHUB_ENV
 
       - name: Build
-        run: yarn build
+        run: |
+          start=$SECONDS
+          yarn build
+          duration=$((SECONDS - start))
+          echo "::notice::Build took ${duration}s"
+          echo "BUILD_DURATION=${duration}" >> $GITHUB_ENV
+
+      - name: Build output info
+        run: |
+          echo "::group::Build output"
+          echo "Files produced:"
+          ls -lh dist/
+          echo ""
+          echo "Total size: $(du -sh dist/ | cut -f1)"
+          echo "::endgroup::"
 
       - name: Archive build output
         run: tar -czf build-output.tar.gz -C dist .
@@ -77,6 +126,8 @@ jobs:
           echo "| **Ref** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Runner** | \`${{ matrix.os }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Run** | [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Install** | ${INSTALL_DURATION:-n/a}s |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Build** | ${BUILD_DURATION:-n/a}s |" >> $GITHUB_STEP_SUMMARY
 
       - name: Mock notification payload
         if: always()
@@ -100,10 +151,30 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build container image
-        run: docker build -t electron-ci -f Dockerfile.ci .
+        run: |
+          start=$SECONDS
+          echo "::group::Docker build"
+          docker build -t electron-ci -f Dockerfile.ci .
+          echo "::endgroup::"
+          echo "::notice::Docker build took $((SECONDS - start))s"
+          echo "::group::Image info"
+          docker images electron-ci --format "Size: {{.Size}}"
+          echo "::endgroup::"
 
       - name: Package for Linux
-        run: docker run --rm -v ${{ github.workspace }}/package:/app/package electron-ci yarn package --linux AppImage
+        run: |
+          start=$SECONDS
+          echo "::group::electron-builder output"
+          docker run --rm -v ${{ github.workspace }}/package:/app/package electron-ci yarn package --linux AppImage
+          echo "::endgroup::"
+          echo "::notice::Packaging took $((SECONDS - start))s"
+
+      - name: Package output info
+        run: |
+          echo "::group::Package output"
+          echo "Artifacts produced:"
+          ls -lh package/ || echo "No output in package/"
+          echo "::endgroup::"
 
       - name: Simulate registry push
         run: |
