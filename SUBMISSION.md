@@ -85,7 +85,13 @@ Added `Dockerfile.ci` and converted the package job to build and run inside a co
 - Package job does `docker build` then `docker run`, mounting only the output directory back to the host
 - Applied to the package job specifically — it has the most system-level dependencies
 
+**Why two builds instead of one?**
+
+The build job compiles TypeScript on the runner directly. The package job rebuilds inside a container. This means `tsc` runs twice. In a production pipeline, the container image would be pushed to a registry (e.g. ECR) after the build step, then pulled by downstream jobs — one build, many consumers. A simulated registry push step is included to demonstrate where this would happen.
+
+For this project, `tsc` takes seconds, so the simplicity of a self-contained package job outweighs the complexity of wiring up a registry. The Dockerfile and registry simulation show the intent and the path to get there.
+
 **Trade-offs:**
 - Adds build time for the `docker build` step (offset by layer caching on repeat runs)
-- A production pipeline would push the image to GHCR and reference it directly, avoiding rebuild each run
+- No actual registry configured — simulated push shows where ECR/GHCR would plug in
 - Local developers can use the same Dockerfile to reproduce CI builds exactly
