@@ -56,3 +56,19 @@ Added a `audit` job that runs `npm audit --audit-level=high` in parallel with th
 **Trade-offs:**
 - This project's 2023-era deps have 14 high and 2 critical vulns, so the audit job will correctly fail. That's the gate working as intended.
 - `npm audit` can be noisy. A production pipeline would add SBOM generation and policy-based exceptions for accepted risks.
+
+---
+
+## Feature 4 — Package the Application
+
+Added a `package` job that produces a Linux AppImage using `electron-builder`.
+
+**Decisions:**
+- Targeted Linux only — avoids code signing and notarization complexity (macOS/Windows)
+- AppImage format — portable, no install required, standard for Linux Electron apps
+- `needs: build` — packaging runs after the build job succeeds, establishing a clear pipeline order
+- Used `--publish never` (already in the project's `package` script) — no auto-publishing to GitHub Releases
+
+**Trade-offs:**
+- macOS (.dmg) and Windows (.exe) packaging would need paid runners and signing infrastructure
+- The package job re-runs install + build since GitHub Actions jobs don't share filesystems. Could optimize with artifact download but adds complexity for minimal gain here.
