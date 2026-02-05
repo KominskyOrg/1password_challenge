@@ -71,4 +71,21 @@ Added a `package` job that produces a Linux AppImage using `electron-builder`.
 
 **Trade-offs:**
 - macOS (.dmg) and Windows (.exe) packaging would need paid runners and signing infrastructure
-- The package job re-runs install + build since GitHub Actions jobs don't share filesystems. Could optimize with artifact download but adds complexity for minimal gain here.
+
+---
+
+## Feature 5 — Containerized Build Environment
+
+Added `Dockerfile.ci` and converted the package job to build and run inside a container.
+
+**Decisions:**
+- Based on `node:18.20-bullseye-slim` — pinned tag for reproducibility, slim to reduce image size
+- Installs `fakeroot` and `dpkg` — system deps needed by electron-builder for Linux packaging
+- Dockerfile copies `package.json` + `yarn.lock` first for layer caching, then source
+- Package job does `docker build` then `docker run`, mounting only the output directory back to the host
+- Applied to the package job specifically — it has the most system-level dependencies
+
+**Trade-offs:**
+- Adds build time for the `docker build` step (offset by layer caching on repeat runs)
+- A production pipeline would push the image to GHCR and reference it directly, avoiding rebuild each run
+- Local developers can use the same Dockerfile to reproduce CI builds exactly
