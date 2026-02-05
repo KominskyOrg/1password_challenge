@@ -105,6 +105,15 @@ jobs:
       - name: Package for Linux
         run: docker run --rm -v ${{ github.workspace }}/package:/app/package electron-ci yarn package --linux AppImage
 
+      - name: Simulate registry push
+        run: |
+          echo "In production, this step would push the build image to a container registry."
+          echo ""
+          echo "  docker tag electron-ci \$ECR_REGISTRY/electron-ci:\${{ github.sha }}"
+          echo "  docker push \$ECR_REGISTRY/electron-ci:\${{ github.sha }}"
+          echo ""
+          echo "Downstream jobs would then pull this image instead of rebuilding."
+
       - name: Upload packaged artifact
         uses: actions/upload-artifact@v4
         with:
