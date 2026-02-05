@@ -45,16 +45,16 @@ Added an `if: always()` step that writes a structured summary to the GitHub Acti
 
 ## Feature 3 — Vulnerability Detection and Gating
 
-Added a `audit` job that runs `npm audit --audit-level=high` in parallel with the build job.
+Added a `security` job that runs dependency auditing and Electron source code scanning in parallel with the build job.
 
 **Decisions:**
-- Used `npm audit` over `yarn audit` — cleaner severity gating (`--audit-level` flag vs yarn's bitmask exit codes)
-- Gates on `high` and `critical` — these represent unacceptable risk
-- Runs as a separate parallel job — audit failure doesn't block artifact creation, but both must pass for the workflow to be green
-- No install step needed — `npm audit` reads directly from the committed `package-lock.json`
+- Combined `npm audit` and `yarn electronegativity` into a single job — both are security checks, both are fast, avoids duplicating checkout/setup
+- `npm audit --audit-level=high` gates on dependency CVEs
+- `yarn electronegativity` scans source for Electron-specific security misconfigurations (insecure BrowserWindow options, disabled context isolation, etc.)
+- Both tools were already available in the project's package.json
 
 **Trade-offs:**
-- This project's 2023-era deps have 14 high and 2 critical vulns, so the audit job will correctly fail. That's the gate working as intended.
+- This project's 2023-era deps have 14 high and 2 critical vulns, so the audit step will correctly fail. That's the gate working as intended.
 - `npm audit` can be noisy. A production pipeline would add SBOM generation and policy-based exceptions for accepted risks.
 
 ---

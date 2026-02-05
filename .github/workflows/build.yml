@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  audit:
-    name: Dependency Audit
+  security:
+    name: Security Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,9 +21,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Audit dependencies
         run: npm audit --audit-level=high
+
+      - name: Electronegativity scan
+        run: yarn electronegativity
 
   build:
     name: Build (${{ matrix.os }})
