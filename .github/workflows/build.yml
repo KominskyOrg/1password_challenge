@@ -43,3 +43,28 @@ jobs:
           name: build-output-${{ matrix.os }}
           path: build-output.tar.gz
           retention-days: ${{ github.ref == 'refs/heads/main' && 14 || github.event_name == 'pull_request' && 3 || 7 }}
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## Build Result: \`${{ job.status }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Ref** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Runner** | \`${{ matrix.os }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Run** | [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Mock notification payload
+        if: always()
+        run: |
+          cat <<EOF
+          {
+            "status": "${{ job.status }}",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref_name }}",
+            "os": "${{ matrix.os }}",
+            "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF

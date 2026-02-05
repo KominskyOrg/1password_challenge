@@ -24,3 +24,19 @@ Added `.github/workflows/build.yml` — a GitHub Actions workflow that installs 
 
 **Trade-offs:**
 - No runtime validation yet — this only proves it compiles cleanly
+
+---
+
+## Feature 2 — Build Notification
+
+Added an `if: always()` step that writes a structured summary to the GitHub Actions job summary page, plus a mock notification payload printed to the build log.
+
+**Decisions:**
+- Used `$GITHUB_STEP_SUMMARY` — native, no external credentials, persistent and auditable
+- Summary includes status, commit SHA, ref, runner OS, and a direct link to the run
+- Mock JSON payload demonstrates where a real Slack/webhook integration would plug in
+- Both steps run on success and failure via `if: always()`
+
+**Trade-offs:**
+- Not a real alerting system — no Slack, email, or PagerDuty integration
+- The mock payload is printed to stdout, not sent anywhere. In production this would be a `curl` to a webhook URL stored in GitHub Secrets
