@@ -40,3 +40,19 @@ Added an `if: always()` step that writes a structured summary to the GitHub Acti
 **Trade-offs:**
 - Not a real alerting system — no Slack, email, or PagerDuty integration
 - The mock payload is printed to stdout, not sent anywhere. In production this would be a `curl` to a webhook URL stored in GitHub Secrets
+
+---
+
+## Feature 3 — Vulnerability Detection and Gating
+
+Added a `audit` job that runs `npm audit --audit-level=high` in parallel with the build job.
+
+**Decisions:**
+- Used `npm audit` over `yarn audit` — cleaner severity gating (`--audit-level` flag vs yarn's bitmask exit codes)
+- Gates on `high` and `critical` — these represent unacceptable risk
+- Runs as a separate parallel job — audit failure doesn't block artifact creation, but both must pass for the workflow to be green
+- No install step needed — `npm audit` reads directly from the committed `package-lock.json`
+
+**Trade-offs:**
+- This project's 2023-era deps have 14 high and 2 critical vulns, so the audit job will correctly fail. That's the gate working as intended.
+- `npm audit` can be noisy. A production pipeline would add SBOM generation and policy-based exceptions for accepted risks.
