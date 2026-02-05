@@ -142,3 +142,4 @@ Prioritized by impact to a CI platform team supporting multiple engineering team
 
 - One-command local build via the CI Dockerfile
 - Reusable workflows and composite actions to reduce duplication across repos
+- Extract complex CI logic into Python scripts as pipeline complexity grows — better structured logging, testability, and easier to maintain than inline bash
