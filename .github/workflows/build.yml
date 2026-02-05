@@ -165,7 +165,7 @@ jobs:
         run: |
           start=$SECONDS
           echo "::group::electron-builder output"
-          docker run --rm -v ${{ github.workspace }}/package:/app/package electron-ci yarn package --linux AppImage
+          docker run --rm -u root -v ${{ github.workspace }}/package:/app/package electron-ci yarn package --linux AppImage
           echo "::endgroup::"
           echo "::notice::Packaging took $((SECONDS - start))s"
 
