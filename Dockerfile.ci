@@ -2,6 +2,7 @@ FROM node:18.20-bullseye-slim
 
 # System deps required by electron-builder for Linux packaging
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     fakeroot \
     dpkg \
     && rm -rf /var/lib/apt/lists/*
@@ -13,8 +14,9 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Copy source and build
-COPY --chown=node:node . .
+COPY . .
 RUN yarn build
 
-# Run as non-root
+# Hand ownership to non-root user before switching
+RUN chown -R node:node /app
 USER node
